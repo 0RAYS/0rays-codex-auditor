@@ -1,104 +1,75 @@
-FROM ubuntu:24.04
+FROM archlinux:base-devel
 
-LABEL maintainer="int_barbituric"
-LABEL description="Codex-based code audit / CTF workstation"
+LABEL maintainer="RocketDev"
+LABEL description="Codex-based binary code audit"
 
-ARG DEBIAN_FRONTEND=noninteractive
+# 1) pacman 镜像
+COPY mirrorlist /etc/pacman.d/mirrorlist
+COPY archlinuxcn-mirrorlist /etc/pacman.d/archlinuxcn-mirrorlist
 
-RUN sed -i 's@//.*archive.ubuntu.com@//mirrors.ustc.edu.cn@g; s@//.*security.ubuntu.com@//mirrors.ustc.edu.cn@g' /etc/apt/sources.list.d/*
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    # 基础
-    ca-certificates wget curl git openssh-server tmux locales xxd ttyd nginx \
-    # 编辑器
-    vim \
-    # 搜索 & 文本
-    ripgrep fd-find tree jq bat less file \
-    # 编译
-    build-essential cmake pkg-config \
-    # 网络
-    net-tools iputils-ping dnsutils netcat-openbsd nmap socat dirsearch sqlmap nikto whatweb \
-    # 压缩
-    unzip p7zip-full xz-utils bzip2 tar zip \
-    # 二进制分析
-    binutils strace ltrace \
-    # Python
-    python3 python3-pip \
-    # Java
-    openjdk-17-jre-headless \
-    # PHP
-    php8.3-cli php8.3-curl php8.3-xml php8.3-mbstring \
-    # Node.js
-    nodejs npm \
-    && rm -rf /var/lib/apt/lists/*
+# 2) 基础软件（尽量使用官方源）
+RUN pacman -Syu --noconfirm \
+    ca-certificates wget curl git openssh ttyd supervisor nginx openssl shadow \
+    vim ripgrep tree jq bat less file starship util-linux \
+    cmake pkgconf meson ninja abseil-cpp go qemu-full \
+    unzip p7zip xz bzip2 tar zip libarchive tmux lrzsz \
+    binutils strace lsof clang llvm-libs cppcheck \
+    python python-pip uv openai-codex procps-ng ipython \
+    afl++ bear boost-libs debuginfod gdb libc++ \
+    zsh zsh-syntax-highlighting zsh-autosuggestions \
+    net-tools iproute2 openbsd-netcat \
+    && pacman -Scc --noconfirm
 
-# 3. 基础环境
-ADD https://github.com/krallin/tini/releases/download/v0.19.0/tini-amd64 /usr/bin/tini
-ADD https://github.com/filebrowser/filebrowser/releases/latest/download/linux-amd64-filebrowser.tar.gz /tmp/fb.tar.gz
+RUN cat >> /etc/pacman.conf << EOF
+[archlinuxcn]
+Include = /etc/pacman.d/archlinuxcn-mirrorlist
+EOF
+RUN pacman-key --init && \
+    pacman -Sy archlinuxcn-keyring --noconfirm && \
+    pacman -Syu --noconfirm yay filebrowser && \
+    pacman -Scc --noconfirm
+
+# 3) 额外二进制工具
 ADD https://github.com/SaladDay/cc-switch-cli/releases/download/v4.7.0/cc-switch-cli-linux-x64-musl.tar.gz /tmp/ccs.tar.gz
-RUN tar -xzf /tmp/fb.tar.gz -C /usr/bin filebrowser && rm /tmp/fb.tar.gz
-RUN tar -xzf /tmp/ccs.tar.gz -C /usr/bin cc-switch && rm /tmp/ccs.tar.gz
-RUN chmod +x /usr/bin/ttyd /usr/bin/tini /usr/bin/cc-switch /usr/bin/filebrowser
+ADD https://github.com/krallin/tini/releases/download/v0.19.0/tini-amd64 /usr/bin/tini
+RUN tar -xzf /tmp/ccs.tar.gz -C /usr/bin cc-switch && rm /tmp/ccs.tar.gz && chmod +x /usr/bin/tini
 
-RUN locale-gen zh_CN.UTF-8 && update-locale LANG=zh_CN.UTF-8
+# 4) 目录结构
+RUN mkdir -p /data/workspace /data/codex /data/tools /data/cc-switch && \
+    ln -sfn /data/codex/ /root/.codex && \
+    ln -sfn /data/cc-switch/ /root/.cc-switch
 
-COPY scripts/nginx.conf /etc/nginx/nginx.conf
-
-# 4. 包管理源配置
-RUN npm config set registry https://registry.npmmirror.com && \
-    pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple; true
-
-# 5. Codex
-RUN npm i -g @openai/codex@latest
-
-# 6. Python 常用库
-RUN pip install --break-system-packages --no-cache-dir \
-    pycryptodome \
-    gmpy2 \
-    sympy \
-    requests \
-    beautifulsoup4 \
-    semgrep
-
-# 7. 目录结构
-RUN mkdir -p /data/workspace /data/codex /data/tools /data/cc-switch
-RUN ln -sfn /data/codex/ /root/.codex
-RUN ln -sfn /data/cc-switch/ /root/.cc-switch
-
-# 8. 手动构建完工具目录后复制进容器
-COPY tools/ /data/tools/
 COPY skills/ /data/skills/
-RUN chmod +x /data/tools/fscan/fscan \
-             /data/tools/static-binaries/* \
-             /data/tools/misc-bkcrack-*/bkcrack 2>/dev/null; true
 
-# 9. SSH 配置
+# 5) SSH 配置
 RUN mkdir -p /run/sshd && \
     sed -i 's/^#*PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config && \
     sed -i 's/^#*Port .*/Port 8982/' /etc/ssh/sshd_config && \
     ssh-keygen -A
 
-# 10. 脚本 & 配置文件
-COPY scripts/start.sh /start.sh
+# 6) 脚本 & 配置文件
+COPY configs/supervisord.conf /etc/supervisord.conf
+COPY configs/nginx.conf /etc/nginx/nginx.conf
+COPY scripts/init /init
 COPY scripts/tmux.sh /tmux.sh
+COPY scripts/sudo.zsh /root/.sudo.zsh
+COPY configs/zshrc /root/.zshrc
+COPY configs/tmux.conf /root/.tmux.conf
+COPY configs/vimrc /root/.vimrc
+COPY vim-plugins.tar.zst /tmp/vim-plugins.tar.zst
 COPY AGENTS.md /data/codex/AGENTS.md
-RUN chmod +x /start.sh /tmux.sh
+RUN chmod +x /init /tmux.sh && touch /root/.bash_profile && chsh -s /usr/bin/zsh root && \
+    bsdtar -xf /tmp/vim-plugins.tar.zst -C /root
 
-# 11. .bashrc 注入
-RUN sed -i '1i\# Auto-attach tmux\nif [[ $- == *i* ]] && [ -z "${TMUX}" ]; then\n    exec /tmux.sh\nfi\n' /root/.bashrc && \
-    echo '[ -f /etc/audit-env ] && source /etc/audit-env' >> /root/.bashrc && \
-    echo '[ -f /data/custom.sh ] && source /data/custom.sh' >> /root/.bashrc
+# 7) 清理
+RUN rm -rf /tmp/* /var/tmp/* && history -c 2>/dev/null; true
 
-# 12. 清理
-RUN apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && history -c 2>/dev/null; true
+# 8) 写入history便于使用
+RUN echo 'codex --dangerously-bypass-approvals-and-sandbox' > /root/.histfile
 
-# 13. 写入history便于使用
-RUN echo 'codex --dangerously-bypass-approvals-and-sandbox' > /root/.bash_history
-
-# 元数据
 EXPOSE 8981 8982
 WORKDIR /data/workspace
 VOLUME ["/data"]
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["/start.sh"]
+CMD ["/init"]

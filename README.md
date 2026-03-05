@@ -14,6 +14,7 @@ docker run -d \
   -e OPENAI_API_KEY="sk-xxx" \
   -e OPENAI_BASE_URL="https://your.api.dist/v1" \
   -e PASSWORD="yourpassword" \
+  -e PACMAN_USE_MIRROR=0 \
   -v codex-data:/data \
   christarcher/0rays-codex-client:latest
 ```
@@ -24,7 +25,7 @@ docker run -d \
 
 | 方式 | 地址 |
 |---|---|
-| Web 终端 | `http://<host>:8981` |
+| Web 终端 (ttyd) | `http://<host>:8981` |
 | SSH | `ssh root@<host> -p 8982` |
 
 默认密码通过 `PASSWORD` 环境变量设置，未设置时为 `0raysnb`。
@@ -41,6 +42,8 @@ docker run -d \
 | `OPENAI_BASE_URL` | API 地址, 格式为https://placeholder.com/v1 |
 | `PASSWORD` | SSH 和终端的 root 密码 (默认为0raysnb) |
 | `PROXY` | HTTP/HTTPS 代理地址 (可选) |
+| `GLOBAL_MIRROR` | 运行时是否使用自带 mirrorlist (默认换成国内源；海外建议设置以恢复官方mirrorlist) |
+| `PACMAN_NEW_KEYRING` | 设置后每次启动都生成新本地密钥，需要启用不安全的源时设置 |
 
 ## 目录结构
 
@@ -55,20 +58,17 @@ docker run -d \
 
 ## 预装环境
 
-- Python 3 + uv
-- C/C++ 编译环境
+- Python + uv
+- C/C++ 编译环境（`base-devel` + `cmake` 等）
 
 ## 自定义扩展
 
 基于此镜像构建专属环境：
 
 ```dockerfile
-FROM christarcher/0rays-codex-client:latest
+FROM RocketDev/0rays-codex-auditor:latest
 
-RUN apt-get update && apt-get install -y gdb gdbserver
-RUN pip install --break-system-packages pwntools ropper
-
-COPY pwndbg/ /data/tools/
+RUN pacman -Syu --noconfirm gdb gdbserver
 ```
 
 为控制镜像体积，不要预装过大的工具，按需现场安装
