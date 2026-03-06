@@ -65,9 +65,9 @@ docker run -d \
 基于此镜像构建专属环境：
 
 ```dockerfile
-FROM RocketDev/0rays-codex-auditor:latest
+FROM rocketdev/0rays-codex-auditor:v1
 
-RUN pacman -Syu --noconfirm gdb gdbserver
+RUN pacman -Syu --noconfirm python-pwntools
 ```
 
 为控制镜像体积，不要预装过大的工具，按需现场安装

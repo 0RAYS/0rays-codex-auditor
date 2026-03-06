@@ -27,7 +27,7 @@ RUN sed -i 's/#Color/Color/' /etc/pacman.conf && \
 Include = /etc/pacman.d/archlinuxcn-mirrorlist
 EOF
 RUN pacman-key --init && \
-    pacman -Sy archlinuxcn-keyring --noconfirm && \
+    pacman -Sy archlinuxcn-keyring archlinux-keyring --noconfirm && \
     pacman -Syu --noconfirm yay filebrowser && \
     pacman -Scc --noconfirm
 RUN useradd -m builder && \
