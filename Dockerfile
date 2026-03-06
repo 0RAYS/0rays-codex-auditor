@@ -13,9 +13,9 @@ RUN pacman -Syu --noconfirm \
     vim ripgrep tree jq bat less file starship util-linux \
     cmake pkgconf meson ninja abseil-cpp go qemu-full \
     unzip p7zip xz bzip2 tar zip libarchive tmux lrzsz \
-    binutils strace lsof clang llvm-libs cppcheck \
+    binutils strace lsof clang llvm-libs cppcheck patchelf \
     python python-pip uv openai-codex procps-ng ipython \
-    afl++ bear boost-libs debuginfod gdb libc++ \
+    afl++ bear boost-libs debuginfod pwndbg libc++ \
     zsh zsh-syntax-highlighting zsh-autosuggestions \
     net-tools iproute2 openbsd-netcat sudo \
     && pacman -Scc --noconfirm
