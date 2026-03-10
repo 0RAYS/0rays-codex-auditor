@@ -17,7 +17,7 @@ RUN pacman -Syu --noconfirm \
     python python-pip uv openai-codex procps-ng ipython \
     afl++ bear boost-libs debuginfod pwndbg libc++ \
     zsh zsh-syntax-highlighting zsh-autosuggestions \
-    net-tools iproute2 openbsd-netcat sudo \
+    net-tools iproute2 openbsd-netcat sudo rsync \
     && pacman -Scc --noconfirm
 
 # 如果这里构建有问题，就给cat heredoc后面加上反斜杠
