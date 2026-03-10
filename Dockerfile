@@ -23,10 +23,8 @@ RUN pacman -Syu --noconfirm \
 # 如果这里构建有问题，就给cat heredoc后面加上反斜杠
 RUN sed -i 's/#Color/Color/' /etc/pacman.conf && \
     sed -i 's/^MAKEFLAGS=.*/MAKEFLAGS="-j"/' /etc/makepkg.conf && \
-    cat >> /etc/pacman.conf << EOF
-[archlinuxcn]
-Include = /etc/pacman.d/archlinuxcn-mirrorlist
-EOF
+    printf '[archlinuxcn]\nInclude = /etc/pacman.d/archlinuxcn-mirrorlist\n' >> /etc/pacman.conf
+
 RUN pacman-key --init && \
     pacman -Sy archlinuxcn-keyring archlinux-keyring --noconfirm && \
     pacman -Syu --noconfirm yay filebrowser && \
