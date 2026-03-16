@@ -10,7 +10,7 @@ COPY archlinuxcn-mirrorlist /etc/pacman.d/archlinuxcn-mirrorlist
 # 2) 基础软件（尽量使用官方源）
 RUN pacman -Syu --noconfirm \
     ca-certificates wget curl git openssh ttyd supervisor nginx openssl shadow \
-    vim ripgrep tree jq bat less file starship util-linux \
+    vim ripgrep tree jq bat less file starship util-linux man-db \
     cmake pkgconf meson ninja abseil-cpp go qemu-full \
     unzip p7zip xz bzip2 tar zip libarchive tmux lrzsz \
     binutils strace lsof clang llvm-libs cppcheck patchelf \
