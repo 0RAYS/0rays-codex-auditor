@@ -44,10 +44,11 @@ RUN npm config set registry https://registry.npmmirror.com && \
 # 5. Codex
 RUN npm i -g @openai/codex@latest
 
-# 6. Python 常用库
+# 6. Python 常用库 & 审计工具
 RUN pip install --break-system-packages --no-cache-dir \
     requests \
-    beautifulsoup4
+    beautifulsoup4 \
+    semgrep
 
 # 7. 目录结构
 # 根据官方文档, /etc/codex/skills用来存储skills
@@ -55,7 +56,14 @@ RUN mkdir -p /data/workspace /data/codex /data/tools /data/skills /etc/codex
 RUN ln -sfn /data/codex/ /root/.codex
 RUN ln -sfn /data/skills/ /etc/codex/skills
 
-# 8. 手动构建完工具目录后复制进容器
+# 8a. 下载审计工具
+ADD https://github.com/frohoff/ysoserial/releases/download/v0.0.6/ysoserial-all.jar \
+    /data/tools/ysoserial.jar
+
+# 8b. 安装 PHP Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer
+
+# 8c. 手动构建完工具目录后复制进容器
 COPY tools/ /data/tools/
 COPY skills/ /data/skills/
 

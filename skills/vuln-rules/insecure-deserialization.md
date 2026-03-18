@@ -23,7 +23,7 @@ rg "Yaml\(\)|new Yaml|yaml\.load" --type java
 
 # Check available gadget chains against classpath
 unzip -l <target.jar> | grep -iE "commons-collections|commons-beanutils|spring-core|c3p0|rome|bcel"
-java -jar /data/tools/ysoserial-0.0.6/ysoserial.jar --help 2>&1 | head -30
+java -jar /data/tools/ysoserial.jar --help 2>&1 | head -30
 ```
 
 ### PHP

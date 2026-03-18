@@ -24,7 +24,7 @@ If target URL is provided, note it for later — do not actively probe until rep
 ## Step 1: Decompilation
 ```bash
 # Decompile entire jar
-java -jar /data/tools/cfr-0.152/cfr-0.152.jar <input.jar> \
+java -jar /data/tools/cfr-0.152.jar <input.jar> \
   --outputdir /data/workspace/audit/decompiled \
   --silent true
 
@@ -174,7 +174,7 @@ rg "HessianInput|HessianOutput" /data/workspace/audit/decompiled
 
 For confirmed deserialization sinks, check available Gadget chains against the dependency list from Step 2b. Use ysoserial to document usable payloads:
 ```bash
-java -jar /data/tools/ysoserial-0.0.6/ysoserial.jar --help 2>&1 | grep -i "commons\|spring\|beanshell"
+java -jar /data/tools/ysoserial.jar --help 2>&1 | grep -i "commons\|spring\|beanshell"
 ```
 
 ### P0 — File Operations
@@ -237,14 +237,11 @@ For authorization: check whether user-controlled IDs (order IDs, user IDs) are v
 
 ### P1 — Known CVE Verification
 
-If dangerous versions were identified in Step 2b, use dedicated scanners against the test URL (if provided):
-```bash
-# Spring Boot actuators + known CVEs
-python3 /data/tools/web-SpringBoot-Scan/SpringBoot-Scan.py -u <TARGET_URL>
-
-# Struts2
-python3 /data/tools/web-strust2scan/struts2scan.py -u <TARGET_URL>
-```
+If dangerous versions were identified in Step 2b, manually verify known CVEs against the test URL (if provided). Check:
+- Spring Boot Actuator endpoints (`/actuator`, `/env`, `/heapdump`)
+- Struts2 OGNL injection (S2-001 ~ S2-066)
+- Log4Shell JNDI lookup (`${jndi:ldap://...}`)
+- Shiro rememberMe deserialization
 
 ### P2 — Secondary Findings (after P0/P1 complete)
 
