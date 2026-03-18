@@ -1,4 +1,4 @@
-# 0RAYS codex web codeaudit
+# Codex Weber
 
 基于 [Codex](https://github.com/openai/codex) 的代码审计 / CTF 工作站 Docker 镜像
 
@@ -14,7 +14,7 @@ docker run -d \
   -e OPENAI_BASE_URL="https://your.api.dist/v1" \
   -e PASSWORD="yourpassword" \
   -v codex-data:/data \
-  christarcher/0rays-codex-client:latest
+  ghcr.io/0rays/codex-auditor-web:latest
 ```
 
 需要注意的是, 如果/data如果不挂载, 存储的配置会丢失.
